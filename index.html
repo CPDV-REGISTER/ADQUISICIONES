@@ -1,1 +1,82 @@
-er
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema de Solicitud de Compras</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8fafc; margin: 0; padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 8px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    h1 { font-size: 20px; color: #0f172a; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+    .upload-box { border: 2px dashed #94a3b8; background: #f1f5f9; padding: 20px; border-radius: 6px; text-align: center; margin-bottom: 20px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    label { font-size: 13px; font-weight: bold; color: #334155; display: block; margin-bottom: 5px; }
+    input, select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 14px; }
+    th { background-color: #f8fafc; color: #475569; }
+    .btn { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+    .btn:hover { background: #1d4ed8; }
+    .status { margin-top: 10px; font-weight: bold; color: #d97706; display: none; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Solicitud de Compra (GCOMPR-FT-001)</h1>
+
+  <div class="upload-box">
+    <label for="pdfInput">Subir Cotización (PDF):</label>
+    <input type="file" id="pdfInput" accept="application/pdf">
+    <div id="statusText" class="status">⚡ Procesando cotización con IA de Gemini...</div>
+  </div>
+
+  <form id="solicitudForm">
+    <div class="grid">
+      <div>
+        <label>Área / Departamento:</label>
+        <select id="departamento_id" required>
+          <option value="1">Facilities</option>
+          <option value="2">Finance</option>
+          <option value="3">Administration</option>
+        </select>
+      </div>
+      <div>
+        <label>Curso / Actividad:</label>
+        <input type="text" id="curso" placeholder="Ej. Mantenimiento general">
+      </div>
+      <div>
+        <label>Proveedor (Extraído por IA):</label>
+        <input type="text" id="proveedor_nombre">
+      </div>
+      <div>
+        <label>RUT Proveedor:</label>
+        <input type="text" id="proveedor_rut">
+      </div>
+    </div>
+
+    <h3>Detalle de Ítems</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Descripción</th>
+          <th>Cant.</th>
+          <th>P. Unitario</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="itemsBody">
+        <tr><td colspan="5" style="text-align:center; color:#94a3b8;">Adjunte un PDF para autocompletar la tabla</td></tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 20px; text-align: right;">
+      <button type="submit" class="btn">Enviar Solicitud a Aprobación</button>
+    </div>
+  </form>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
