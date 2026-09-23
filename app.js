@@ -1,6 +1,6 @@
 // 1. Reemplaza estos valores por los reales de tu panel en Supabase (Project Settings -> API)
 const SUPABASE_URL = "https://avnvblywgpqgqomdgcgt.supabase.co";
-const SUPABASE_ANON_KEY = "sb_secret_KFT4RazhJpVJopDzbgoBdw_eAoqpX_q";
+const SUPABASE_ANON_KEY = "sb_publishable_Oc2UCzUT2_f9t95H4erOTQ_VIsbtYX7";
 
 // 2. Usamos 'supabaseClient' para evitar la colisión de nombres (SyntaxError)
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
