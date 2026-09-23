@@ -1,8 +1,9 @@
-// 1. Reemplaza estos valores por los reales de tu panel en Supabase (Project Settings -> API)
+// 1. Configuración de Supabase
 const SUPABASE_URL = "https://avnvblywgpqgqomdgcgt.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_Oc2UCzUT2_f9t95H4erOTQ_VIsbtYX7";
+// ⚠️ Reemplaza esto con tu clave real que empieza por 'eyJ...'
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2bnZibHl3Z3BxZ3FvbWRnY2d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMDUxNTEsImV4cCI6MjEwNTY4MTE1MX0.nRh1GLyxglL4iwIkYkC4WGUdKd9064pNQFiBfSza53w";
 
-// 2. Usamos 'supabaseClient' para evitar la colisión de nombres (SyntaxError)
+// 2. Cliente de Supabase
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.getElementById('pdfInput').addEventListener('change', async (event) => {
@@ -16,14 +17,17 @@ document.getElementById('pdfInput').addEventListener('change', async (event) => 
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = async () => {
-    const base64String = reader.result.split(',')[1];
+    // Aseguramos limpiar correctamente la cabecera Data URL
+    const rawResult = reader.result;
+    const base64String = rawResult.includes(',') ? rawResult.split(',')[1] : rawResult;
 
     try {
-      // Llamar a la Edge Function
+      // Llamar a la Edge Function enviando tanto Authorization como apikey
       const response = await fetch(`${SUPABASE_URL}/functions/v1/extraer-cotizacion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({ pdfBase64: base64String })
