@@ -44,7 +44,7 @@ Extrae la información y responde ÚNICAMENTE con un objeto JSON sin formato Mar
   "monto_total_cotizacion": 1000
 }`;
 
-    // Actualizado al modelo activo
+    // Endpoint actualizado al modelo soportado
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     const geminiResponse = await fetch(geminiUrl, {
