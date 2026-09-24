@@ -6,24 +6,28 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Manejo de peticiones preflight CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { pdfBase64 } = await req.json();
-
-    if (!pdfBase64) {
-      throw new Error('No se recibió el archivo PDF en base64');
+    const body = await req.json().catch(() => null);
+    if (!body || !body.pdfBase64) {
+      return new Response(
+        JSON.stringify({ error: "No se recibió el parámetro 'pdfBase64'." }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) {
-      throw new Error('GEMINI_API_KEY no configurada en los Secrets de Supabase');
+      return new Response(
+        JSON.stringify({ error: "Falta la variable GEMINI_API_KEY en los Secrets de Supabase." }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Esquema de respuesta esperado en JSON
+    // Esquema de datos JSON estructurado
     const responseSchema = {
       type: "OBJECT",
       properties: {
@@ -50,41 +54,49 @@ serve(async (req) => {
 
     const prompt = "Analiza este documento de cotización o propuesta económica. Extrae el RUT y nombre del proveedor, fecha, desglose de ítems (descripción, cantidad, precio unitario y total) y el monto total final.";
 
-    // Petición HTTP directa a la API REST de Gemini
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: prompt },
-              {
-                inline_data: {
-                  mime_type: "application/pdf",
-                  data: pdfBase64
-                }
+    // ✅ Usamos gemini-2.5-flash (o gemini-1.5-flash-latest) para evitar el error de endpoint no encontrado
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+    const geminiResponse = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            {
+              inline_data: {
+                mime_type: "application/pdf",
+                data: body.pdfBase64
               }
-            ]
-          }],
-          generationConfig: {
-            response_mime_type: "application/json",
-            response_schema: responseSchema
-          }
-        })
-      }
-    );
+            }
+          ]
+        }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema
+        }
+      })
+    });
 
     const result = await geminiResponse.json();
 
     if (!geminiResponse.ok) {
-      // Retorna el error exacto que entregue Google en lugar de un 400 genérico
-      throw new Error(result.error?.message || 'Error al comunicarse con Gemini API');
+      const msg = result.error?.message || JSON.stringify(result);
+      return new Response(
+        JSON.stringify({ error: `Error desde Gemini API: ${msg}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Extraer y parsear la respuesta JSON generada
-    const textResponse = result.candidates[0].content.parts[0].text;
+    const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!textResponse) {
+      return new Response(
+        JSON.stringify({ error: "Gemini API no devolvió una respuesta válida." }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const datosJSON = JSON.parse(textResponse);
 
     return new Response(JSON.stringify(datosJSON), {
@@ -93,9 +105,9 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    });
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 });
