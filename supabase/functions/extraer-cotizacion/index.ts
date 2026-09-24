@@ -27,34 +27,24 @@ serve(async (req) => {
       );
     }
 
-    // Esquema de datos JSON estructurado
-    const responseSchema = {
-      type: "OBJECT",
-      properties: {
-        proveedor_rut: { type: "STRING" },
-        proveedor_razon_social: { type: "STRING" },
-        fecha_cotizacion: { type: "STRING" },
-        items: {
-          type: "ARRAY",
-          items: {
-            type: "OBJECT",
-            properties: {
-              descripcion: { type: "STRING" },
-              cantidad: { type: "NUMBER" },
-              precio_unitario: { type: "NUMBER" },
-              monto_total: { type: "NUMBER" }
-            },
-            required: ["descripcion", "cantidad", "precio_unitario"]
-          }
-        },
-        monto_total_cotizacion: { type: "NUMBER" }
-      },
-      required: ["proveedor_razon_social", "items", "monto_total_cotizacion"]
-    };
+    const prompt = `Analiza este documento de cotización o propuesta económica.
+Extrae la información y responde ÚNICAMENTE con un objeto JSON sin formato Markdown ni texto adicional, siguiendo esta estructura exacta:
+{
+  "proveedor_rut": "RUT o ID fiscal del proveedor",
+  "proveedor_razon_social": "Nombre de la empresa o proveedor",
+  "fecha_cotizacion": "Fecha del documento",
+  "items": [
+    {
+      "descripcion": "Nombre o descripción del ítem",
+      "cantidad": 1,
+      "precio_unitario": 1000,
+      "monto_total": 1000
+    }
+  ],
+  "monto_total_cotizacion": 1000
+}`;
 
-    const prompt = "Analiza este documento de cotización o propuesta económica. Extrae el RUT y nombre del proveedor, fecha, desglose de ítems (descripción, cantidad, precio unitario y total) y el monto total final.";
-
-    // ✅ Usamos gemini-2.5-flash (o gemini-1.5-flash-latest) para evitar el error de endpoint no encontrado
+    // Actualizado al modelo activo
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     const geminiResponse = await fetch(geminiUrl, {
@@ -73,8 +63,7 @@ serve(async (req) => {
           ]
         }],
         generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: responseSchema
+          responseMimeType: "application/json"
         }
       })
     });
